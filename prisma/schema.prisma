@@ -1,0 +1,217 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum CardCategory {
+  POKEMON
+  ONE_PIECE
+}
+
+enum GachaTier {
+  BASIC
+  ELITE
+  LEGENDARY
+}
+
+enum RarityTier {
+  COMMON
+  UNCOMMON
+  RARE
+  ULTRA_RARE
+  SECRET_RARE
+  CHASE
+}
+
+enum ListingStatus {
+  ACTIVE
+  SOLD
+  CANCELLED
+}
+
+enum RedemptionStatus {
+  VAULTED
+  REDEMPTION_REQUESTED
+  SHIPPED
+  DELIVERED
+}
+
+enum TransactionType {
+  GACHA_PURCHASE
+  MARKETPLACE_BUY
+  MARKETPLACE_SELL
+  BUYBACK
+  REDEMPTION
+}
+
+model User {
+  id            String   @id @default(uuid())
+  walletAddress String   @unique
+  email         String?  @unique
+  displayName   String?
+  isAdmin       Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  nftCards           NFTCard[]
+  gachaPulls         GachaPull[]
+  sellerListings     MarketplaceListing[] @relation("Seller")
+  buyerListings      MarketplaceListing[] @relation("Buyer")
+  transactions       Transaction[]
+  redemptionRequests RedemptionRequest[]
+}
+
+model CardTemplate {
+  id          String       @id @default(uuid())
+  name        String
+  setName     String
+  category    CardCategory
+  rarity      RarityTier
+  grade       String?
+  imageUrl    String
+  description String?
+  marketPrice Float        @default(0)
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  nftCards    NFTCard[]
+  gachaPulls GachaPull[]
+  priceData  PriceData[]
+  gachaCards GachaMachineCard[]
+}
+
+model GachaMachine {
+  id            String       @id @default(uuid())
+  category      CardCategory
+  tier          GachaTier
+  price         Float
+  expectedValue Float
+  name          String
+  description   String?
+  imageUrl      String?
+  isActive      Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  gachaPulls GachaPull[]
+  cards      GachaMachineCard[]
+}
+
+model GachaMachineCard {
+  id             String @id @default(uuid())
+  gachaMachineId String
+  cardTemplateId String
+  weight         Float  // probability weight
+  quantity       Int    @default(-1) // -1 = unlimited
+
+  gachaMachine GachaMachine @relation(fields: [gachaMachineId], references: [id])
+  cardTemplate CardTemplate @relation(fields: [cardTemplateId], references: [id])
+
+  @@unique([gachaMachineId, cardTemplateId])
+}
+
+model NFTCard {
+  id               String           @id @default(uuid())
+  mintAddress      String           @unique
+  cardTemplateId   String
+  ownerId          String
+  vaultId          String
+  inventoryId      String           @unique
+  redemptionStatus RedemptionStatus @default(VAULTED)
+  mintedAt         DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  cardTemplate       CardTemplate         @relation(fields: [cardTemplateId], references: [id])
+  owner              User                 @relation(fields: [ownerId], references: [id])
+  listings           MarketplaceListing[]
+  gachaPull          GachaPull?
+  redemptionRequest  RedemptionRequest?
+}
+
+model GachaPull {
+  id             String   @id @default(uuid())
+  userId         String
+  machineId      String
+  cardTemplateId String
+  nftCardId      String   @unique
+  pricePaid      Float
+  pulledAt       DateTime @default(now())
+
+  user         User         @relation(fields: [userId], references: [id])
+  machine      GachaMachine @relation(fields: [machineId], references: [id])
+  cardTemplate CardTemplate @relation(fields: [cardTemplateId], references: [id])
+  nftCard      NFTCard      @relation(fields: [nftCardId], references: [id])
+}
+
+model MarketplaceListing {
+  id        String        @id @default(uuid())
+  nftCardId String
+  sellerId  String
+  buyerId   String?
+  price     Float
+  status    ListingStatus @default(ACTIVE)
+  createdAt DateTime      @default(now())
+  soldAt    DateTime?
+  updatedAt DateTime      @updatedAt
+
+  nftCard NFTCard @relation(fields: [nftCardId], references: [id])
+  seller  User    @relation("Seller", fields: [sellerId], references: [id])
+  buyer   User?   @relation("Buyer", fields: [buyerId], references: [id])
+}
+
+model Transaction {
+  id              String          @id @default(uuid())
+  userId          String
+  type            TransactionType
+  amount          Float
+  currency        String          @default("USDC")
+  txSignature     String?         @unique
+  stripePaymentId String?         @unique
+  metadata        Json?
+  createdAt       DateTime        @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model PriceData {
+  id             String   @id @default(uuid())
+  cardTemplateId String
+  altPrice       Float?
+  collectrPrice  Float?
+  ebayPrice      Float?
+  medianPrice    Float
+  lastUpdated    DateTime @default(now())
+
+  cardTemplate CardTemplate @relation(fields: [cardTemplateId], references: [id])
+}
+
+model VaultInventory {
+  id          String  @id @default(uuid())
+  vaultId     String  @unique
+  location    String
+  condition   String?
+  notes       String?
+  isAvailable Boolean @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model RedemptionRequest {
+  id              String   @id @default(uuid())
+  nftCardId       String   @unique
+  userId          String
+  shippingAddress Json
+  trackingNumber  String?
+  status          RedemptionStatus @default(REDEMPTION_REQUESTED)
+  requestedAt     DateTime @default(now())
+  shippedAt       DateTime?
+  deliveredAt     DateTime?
+
+  nftCard NFTCard @relation(fields: [nftCardId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+}

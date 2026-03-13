@@ -1,0 +1,52 @@
+{
+  "name": "collectorsrepublic",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "npx tsx prisma/seed.ts",
+    "db:studio": "prisma studio"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://local_proxy@127.0.0.1:41329/git/kazuki-png/collectorsrepublic"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@metaplex-foundation/js": "^0.20.1",
+    "@prisma/client": "^5.22.0",
+    "@solana/spl-token": "^0.4.14",
+    "@solana/wallet-adapter-base": "^0.9.27",
+    "@solana/wallet-adapter-react": "^0.15.39",
+    "@solana/wallet-adapter-react-ui": "^0.9.39",
+    "@solana/wallet-adapter-wallets": "^0.19.37",
+    "@solana/web3.js": "^1.98.4",
+    "@types/node": "^25.5.0",
+    "@types/react": "^19.2.14",
+    "autoprefixer": "^10.4.27",
+    "bs58": "^6.0.0",
+    "next": "^16.1.6",
+    "postcss": "^8.5.8",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "stripe": "^20.4.1",
+    "tailwindcss": "^4.2.1",
+    "typescript": "^5.9.3",
+    "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "@types/bs58": "^4.0.4",
+    "@types/uuid": "^10.0.0",
+    "eslint": "^10.0.3",
+    "prisma": "^5.22.0"
+  }
+}
